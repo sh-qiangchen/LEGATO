@@ -311,16 +311,16 @@ def unlearn(*args, **kwargs):
                 feat_u = generator.get_planes(w_u_adj)
                 feat_target = g_source.get_planes(w_target_adj)
                 
-                # Trajectory Smoothness Regularization       
-                emb = generator.backbone.synthesis.b128.ode_block.hiddenEmbed  
-                chunks = torch.chunk(emb, chunks=5, dim=1)
-                consistency_losses = []
-                for j in range(1, 5):
-                    diff = chunks[j] - chunks[j - 1] 
-                    loss = torch.mean(diff.pow(2))
-                    consistency_losses.append(loss)
-                total_consistency_loss = sum(consistency_losses) / len(consistency_losses)    
-                loss_local = loss_local + total_consistency_loss
+                # # Trajectory Smoothness Regularization       
+                # emb = generator.backbone.synthesis.b128.ode_block.hiddenEmbed  
+                # chunks = torch.chunk(emb, chunks=5, dim=1)
+                # consistency_losses = []
+                # for j in range(1, 5):
+                #     diff = chunks[j] - chunks[j - 1] 
+                #     loss = torch.mean(diff.pow(2))
+                #     consistency_losses.append(loss)
+                # total_consistency_loss = sum(consistency_losses) / len(consistency_losses)    
+                # loss_local = loss_local + total_consistency_loss
                 
                 loss_adj_mse = F.mse_loss(feat_u, feat_target)
                 loss_adj = loss_adj + loss_adj_mse_lambda * loss_adj_mse

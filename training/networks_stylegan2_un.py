@@ -409,7 +409,8 @@ class SynthesisBlock(torch.nn.Module):
             conv_clamp=conv_clamp, channels_last=self.channels_last, **layer_kwargs)
         self.num_conv += 1
 
-        self.ode_block = ODEBlock(out_channels, 256)
+        # self.unlearn = UnlearningLayer(out_channels, 256)  # LoRA-Style, without nn.LeakyReLU
+        self.ode_block = ODEBlock(out_channels, 256)  # C_hddien is 256, Hyper-parameter
 
         if is_last or architecture == 'skip':
             self.torgb = ToRGBLayer(out_channels, img_channels, w_dim=w_dim,
@@ -474,6 +475,7 @@ class SynthesisBlock(torch.nn.Module):
 #----------------------------------------------------------------------------
 
 # ==============Unlearning Layer====================
+# The Neural ODE library is from https://arxiv.org/pdf/1806.07366.
 import torch.nn as nn
 class UnlearningLayer(nn.Module):
     def __init__(self, in_channels, hidden_channels=None):
@@ -515,13 +517,13 @@ class ODEBlock(nn.Module):
         self.odefunc = ODEfunc(in_channels, hidden_channels)
         self.rtol = 1e-4
         self.atol = 1e-3
-        self.method = 'euler'
-        self.step_size = 0.25
+        self.method = 'euler'   
+        self.step_size = 0.4       # 0.4 is hyper-parameter
         self.perturb = False
         self.hiddenEmbed = None
         
     def forward(self, x):
-        self.t = torch.tensor([0, 1]).float().type_as(x)
+        self.t = torch.tensor([0, 1.6]).float().type_as(x)      # 1.6 is hyper-parameter
         self.odefunc.out = []
         out = odeint(self.odefunc, x, self.t, rtol=self.rtol, atol=self.atol,
                                      method=self.method, options=dict(step_size=self.step_size,
