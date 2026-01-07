@@ -29,15 +29,15 @@ except ImportError:
 
 # --- 1. 环境与路径设置 ---
 try:
-    project_root = "/mnt/afs/intern/fangwenhan/wzz-y/yyy/"
+    project_root = "/path/....."
     if project_root not in sys.path:
         sys.path.append(project_root)
 
     from torchcfm.conditional_flow_matching import ConditionalFlowMatcher
     from torchcfm.models.unet import UNetModel
     
-    sys.path.append(os.path.join(project_root, "experiments/classifiers/cifar10/"))
-    from eval_classifiers import get_cifar_classifier
+    sys.path.append(os.path.join(project_root, "experiments/classifiers/mnist/"))
+    from eval_classifiers import get_mnist_classifier
     
     # 自动选择 GPU
     if "CUDA_VISIBLE_DEVICES" not in os.environ:
@@ -191,7 +191,7 @@ class UnlearningTrainer:
         torch.backends.cudnn.deterministic = True
 
     def _setup_dirs(self):
-        name_parts = ["cifar10", "unlearn", f"forget{''.join(map(str, self.args.forget_labels))}"]
+        name_parts = ["mnist", "unlearn", f"forget{''.join(map(str, self.args.forget_labels))}"]
         if self.args.ode_block: name_parts.append("ODEBlock") 
         
         self.run_dir = Path(project_root) / "experiment_runs" / "unlearn_results" / "_".join(name_parts)
@@ -245,7 +245,7 @@ class UnlearningTrainer:
         self.baseline_model.eval()
         for p in self.baseline_model.parameters(): p.requires_grad = False
         
-        self.classifier = get_cifar_classifier(self.device)
+        self.classifier = get_mnist_classifier(self.device)
         self.classifier.eval()
         
         self.clf_normalizer = transforms.Normalize(
@@ -258,9 +258,9 @@ class UnlearningTrainer:
             transforms.ToTensor(), 
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
-        trainset = datasets.CIFAR10(self.config.data_dir, train=True, download=True, transform=transform)
+        trainset = datasets.MNIST(self.config.data_dir, train=True, download=True, transform=transform)
         # Load Testset for Leakage check
-        testset = datasets.CIFAR10(self.config.data_dir, train=False, download=True, transform=transform)
+        testset = datasets.MNIST(self.config.data_dir, train=False, download=True, transform=transform)
         
         self.forget_labels = self.args.forget_labels
         self.retain_labels = [i for i in range(10) if i not in self.forget_labels]
@@ -457,7 +457,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # 请根据实际路径修改默认值
     parser.add_argument("--checkpoint_path", type=str, 
-                        default="/mnt/afs/intern/fangwenhan/wzz-y/yyy/experiments/cfm/cifar10_pixel/models/checkpoint_ep100.pth", 
+                        default="/path/...../checkpoint_ep100.pth", 
                         help="Path to pre-trained UNet checkpoint")
     parser.add_argument("--forget_labels", nargs="*", type=int, default=[0], help="Class to forget")
     parser.add_argument("--lr", type=float, default=1e-2) 
@@ -474,4 +474,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = Config(args)
     trainer = UnlearningTrainer(config, args)
+
     trainer.train()
